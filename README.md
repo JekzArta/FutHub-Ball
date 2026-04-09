@@ -7,6 +7,7 @@ Pengelolaan reservasi lapangan futsal yang masih dilakukan secara manual — via
 - Memberikan transparansi jadwal kepada pelanggan tanpa perlu login
 - Mempermudah admin mengelola lapangan, booking, dan laporan dari satu tempat
 
+---
 
 ## Requirements
 ### Fungsional
@@ -30,6 +31,7 @@ Pengelolaan reservasi lapangan futsal yang masih dilakukan secara manual — via
 - Tidak ada sistem refund otomatis — diproses manual oleh admin
 
 
+---
 ## Aturan Bisnis
 ### Sistem Slot
 - Setiap lapangan memiliki **24 slot/hari** (00:00–01:00 hingga 23:00–24:00)
@@ -87,3 +89,113 @@ Jarak 3–24 jam   →  Skip reminder H-1
 
 Jarak < 3 jam    →  Tidak ada reminder
 ```
+
+---
+
+## User Flow
+
+### Guest Flow
+```
+Buka Website
+      │
+      ▼
+Landing Page
+      │
+      ├──► Klik Lapangan ──► Detail Lapangan
+      │                            │
+      │                     Lihat slot & ulasan
+      │                            │
+      │                     Klik "Booking Sekarang"
+      │                            │
+      │                            ▼
+      │                     Redirect ke Login
+      │
+      └──► Klik Login/Register dari Navbar
+```
+
+### User Flow — Booking
+```
+Login
+  │
+  ▼
+Pilih Lapangan ──► Detail Lapangan
+                         │
+                   Pilih Tanggal (7 hari)
+                         │
+                   Pilih Slot (1–5, berurutan)
+                         │
+              ┌──────────┴──────────┐
+          1–2 slot              3–5 slot
+         Online/Offline        Wajib Online
+              └──────────┬──────────┘
+                         │
+                   Halaman Checkout
+                   (ringkasan + promo + metode bayar)
+                         │
+              ┌──────────┴──────────┐
+           ONLINE               OFFLINE
+              │                    │
+       Info Rekening         Status: PENDING
+       Upload Bukti          n8n → Notif Admin
+              │                    │
+       Status: PENDING        Admin APPROVE
+       n8n → Notif Admin           │
+              │              Status: CONFIRMED
+       Admin Verifikasi       n8n → Notif Customer
+              │                    │
+      ┌───────┴───────┐       Customer Main
+   APPROVE         REJECT     Bayar di Kasir
+      │               │            │
+   CONFIRMED       REJECTED   Admin: COMPLETED
+   Notif WA+Email  Notif WA+Email
+                   Admin catat refund
+```
+
+### User Flow — Ulasan
+```
+Booking COMPLETED
+      │
+      ▼
+n8n kirim Email: "Bagaimana pengalamanmu?"
+      │
+      ▼
+User buka Riwayat Booking
+      │
+      ▼
+Klik card booking completed
+      │
+      ▼
+Tombol "Tulis Ulasan" muncul
+(hanya jika belum pernah review lapangan ini)
+      │
+      ▼
+Isi rating bintang + teks ulasan
+      │
+      ▼
+Ulasan tampil di halaman Detail Lapangan
+```
+
+### Admin Flow
+```
+Login Dashboard Admin
+      │
+      ▼
+Dashboard Utama
+(statistik, grafik, alert pending)
+      │
+      ├──► Manajemen Booking ──► Filter ──► Detail ──► APPROVE/REJECT/COMPLETE
+      │
+      ├──► Manajemen Lapangan ──► CRUD + Foto + Fasilitas + Jam + Slot Override
+      │
+      ├──► Manajemen Promo ──► CRUD + Parameter Lengkap
+      │
+      ├──► Manajemen Pembayaran ──► Kelola Rekening & E-wallet
+      │
+      ├──► Manajemen Ulasan ──► Lihat & Hapus
+      │
+      ├──► Manajemen User ──► Lihat & Nonaktifkan
+      │
+      └──► Laporan ──► Filter Periode ──► Export
+```
+
+---
