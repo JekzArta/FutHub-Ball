@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: #059669; /* Emerald 600 */
+  --color-primary-hover: #047857; /* Emerald 700 */
+  --color-secondary: #0f172a; /* Slate 900 */
+  --color-secondary-hover: #1e293b; /* Slate 800 */
+  --color-background: #ffffff;
+  --color-foreground: #020617; /* Slate 950 */
+  --color-muted: #f8fafc; /* Slate 50 */
+  --font-sans: var(--font-outfit);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #020617;
+  --border: #e2e8f0;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), sans-serif;
+  scroll-behavior: smooth;
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1rem;
+  max-width: 1280px;
+
+  @media (width >= 640px) {
+    max-width: 640px;
+  }
+  @media (width >= 768px) {
+    max-width: 768px;
+  }
+  @media (width >= 1024px) {
+    max-width: 1024px;
+  }
+  @media (width >= 1280px) {
+    max-width: 1280px;
+  }
+  @media (width >= 1536px) {
+    max-width: 1536px;
+  }
+}
+
+/* Base custom classes */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #334155; /* slate-700 */
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #475569; /* slate-600 */
+  }
+}
+
+/* ─────────────────────────────── */
+/* Flowing gradient text animation */
+/* ─────────────────────────────── */
+@keyframes flowGradient {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.text-gradient-flow {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #6ee7b7 25%,
+    #10b981 50%,
+    #6ee7b7 75%,
+    #ffffff 100%
+  );
+  background-size: 300% 300%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: flowGradient 2s ease-in-out infinite;
+}
+
