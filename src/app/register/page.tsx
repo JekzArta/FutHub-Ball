@@ -45,11 +45,16 @@ export default function RegisterPage() {
       return;
     }
     setIsLoading(true);
-    // Simulate API call — replace with real fetch to /api/v1/auth/register
+    // Simulate API call
     await new Promise((r) => setTimeout(r, 1400));
+    
+    // Simulate successful registration
+    // We don't automatically log in for registration flow (usually), 
+    // but for mock purposes we could. Let's redirect to login for a standard flow.
+    
     setIsLoading(false);
-    // On success: redirect to login
-    router.push("/login");
+    // Redirect to login
+    router.push("/login?registered=true");
   };
 
   const passwordStrength = () => {

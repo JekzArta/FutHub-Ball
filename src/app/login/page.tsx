@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Eye, EyeOff, MapPin, ArrowRight, AlertCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff, MapPin, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
 
 // Note: metadata must be in a server component; kept here as reference
 // export const metadata: Metadata = { title: "Masuk | FutHub Ball" };
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Memuat...</div>}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isRegistered = searchParams.get("registered") === "true";
+  
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -27,12 +38,27 @@ export default function LoginPage() {
       return;
     }
     setIsLoading(true);
-    // Simulate API call — replace with real fetch to /api/v1/auth/login
+    // Simulate API call
     await new Promise((r) => setTimeout(r, 1200));
+    
+    // Mock successful login: store user data in sessionStorage
+    const mockUser = {
+      id: "USR-001",
+      name: "Budi Santoso",
+      email: form.email,
+      avatar: "BS",
+      role: "member"
+    };
+    
+    sessionStorage.setItem("futhub_user", JSON.stringify(mockUser));
+    
     setIsLoading(false);
-    // On success: store JWT & redirect
-    // For now, redirect to home
+    // Redirect to home
     router.push("/");
+    // Force a small delay then refresh to update Navbar state (since we're not using a global state manager like Redux/Zustand yet)
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   return (
@@ -64,6 +90,14 @@ export default function LoginPage() {
           <p className="text-slate-400 text-center text-sm mb-8">
             Masuk untuk booking lapangan favoritmu
           </p>
+
+          {/* Success Message */}
+          {isRegistered && (
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-4 py-3 text-emerald-400 text-sm">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              Pendaftaran berhasil! Silakan masuk menggunakan akun baru Anda.
+            </div>
+          )}
 
           {/* Error Alert */}
           {error && (

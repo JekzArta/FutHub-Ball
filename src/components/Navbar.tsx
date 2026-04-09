@@ -1,14 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X, MapPin } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, X, MapPin, User, LogOut, History, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<{ name: string; avatar: string } | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    const savedUser = sessionStorage.getItem("futhub_user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    sessionStorage.removeItem("futhub_user");
+    setUser(null);
+    setIsOpen(false);
+    router.push("/");
+    // Refresh to clear any other data if necessary
+    window.location.reload();
+  };
 
   if (pathname.startsWith("/admin")) return null;
 
@@ -46,12 +64,31 @@ export default function Navbar() {
 
         {/* Desktop Action Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          <Button variant="ghost" asChild>
-            <Link href="/login">Masuk</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/register">Daftar</Link>
-          </Button>
+          {user ? (
+            <div className="flex items-center gap-4">
+              <Link href="/profil" className="flex items-center gap-2 group p-1 pr-3 rounded-full hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 font-bold text-sm">
+                  {user.avatar}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold text-slate-900 group-hover:text-primary transition-colors">{user.name}</span>
+                  <span className="text-[10px] text-slate-500 leading-tight">Member Pro</span>
+                </div>
+              </Link>
+              <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-400 hover:text-red-500" title="Keluar">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link href="/login">Masuk</Link>
+              </Button>
+              <Button asChild>
+                <Link href="/register">Daftar</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Toggle */}
@@ -89,13 +126,29 @@ export default function Navbar() {
             >
               Tentang Kami
             </Link>
-            <div className="mt-4 flex flex-col gap-2">
-              <Button variant="outline" className="w-full justify-center" asChild>
-                <Link href="/login">Masuk</Link>
-              </Button>
-              <Button className="w-full justify-center" asChild>
-                <Link href="/register">Daftar</Link>
-              </Button>
+            <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
+              {user ? (
+                <>
+                  <Link href="/profil" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium">
+                    <User className="h-5 w-5 text-emerald-500" /> Profil Saya
+                  </Link>
+                  <Link href="/riwayat" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium">
+                    <History className="h-5 w-5 text-emerald-500" /> Riwayat Booking
+                  </Link>
+                  <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 text-red-600 font-medium text-left">
+                    <LogOut className="h-5 w-5" /> Keluar
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" className="w-full justify-center" asChild>
+                    <Link href="/login" onClick={() => setIsOpen(false)}>Masuk</Link>
+                  </Button>
+                  <Button className="w-full justify-center" asChild>
+                    <Link href="/register" onClick={() => setIsOpen(false)}>Daftar</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
