@@ -93,7 +93,7 @@ Jarak < 3 jam    →  Tidak ada reminder
 ---
 
 ## User Flow
-
+Flow akan berubah tergantung implementasi jadi dari website, jadi ini hanya gambaran kasar (sementara).
 ### Guest Flow
 ```
 Buka Website
