@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Star, ShieldCheck, Clock, X, Share2, Copy, Check,
+  Star, ShieldCheck, Clock, X, Share2, Check,
   Zap, ParkingCircle, Wifi, UtensilsCrossed, Armchair, Droplets,
   ChevronLeft, ChevronRight, Info,
 } from "lucide-react";
@@ -564,7 +564,7 @@ export default function LapanganDetailPage() {
       <section className="container pb-12">
         <ScrollReveal direction="up" delay={200} duration={800}>
           <div className="border-t border-slate-800 pt-10">
-            <ReviewSection lapanganName={lapangan.name} />
+          <ReviewSection />
           </div>
         </ScrollReveal>
       </section>

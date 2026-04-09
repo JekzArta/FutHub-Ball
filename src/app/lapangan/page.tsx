@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Search, SlidersHorizontal, MapPin } from "lucide-react";
-import { Lapangan, mockLapangan } from "@/data/mockLapangan";
+import { mockLapangan } from "@/data/mockLapangan";
 import LapanganCard from "@/components/LapanganCard";
 import ScrollReveal from "@/components/ScrollReveal";
 import { Button } from "@/components/ui/button";

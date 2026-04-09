@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -148,6 +147,8 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ── Load booking state from sessionStorage ─────────────────────
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
     const raw = sessionStorage.getItem(BOOKING_STATE_KEY);
     if (!raw) {
@@ -156,9 +157,14 @@ export default function CheckoutPage() {
     }
     try {
       const parsed: BookingState = JSON.parse(raw);
-      setBooking(parsed);
-      // 3–5 slots → force online
-      if (parsed.slots.length >= 3) setPaymentMode("online");
+      
+      // Defer to avoid synchronous setState warning
+      Promise.resolve().then(() => {
+        setBooking(parsed);
+        // 3–5 slots → force online
+        if (parsed.slots.length >= 3) setPaymentMode("online");
+        setIsLoaded(true);
+      });
     } catch {
       router.replace("/lapangan");
     }
@@ -216,6 +222,11 @@ export default function CheckoutPage() {
     setAppliedPromo(null);
   }, []);
 
+  // ── Derived ───────────────────────────────────────────────────
+  const summary = booking
+    ? calcSummary(booking.pricePerSlot, booking.slots.length, discountAmount)
+    : null;
+
   // ── Submit ────────────────────────────────────────────────────
   const handleSubmit = useCallback(() => {
     if (!booking) return;
@@ -230,7 +241,7 @@ export default function CheckoutPage() {
       sessionStorage.setItem("futhub_last_booking_id", mockBookingId);
       sessionStorage.setItem("futhub_last_payment_mode", paymentMode);
       sessionStorage.setItem("futhub_last_method_id", selectedMethodId);
-      sessionStorage.setItem("futhub_last_total", String(summary!.total));
+      sessionStorage.setItem("futhub_last_total", String(summary?.total ?? 0));
 
       if (paymentMode === "online") {
         router.push(`/booking/payment/${mockBookingId}`);
@@ -238,12 +249,8 @@ export default function CheckoutPage() {
         router.push("/riwayat");
       }
     }, 1200);
-  }, [booking, paymentMode, router]);
+  }, [booking, paymentMode, router, selectedMethodId, summary]);
 
-  // ── Derived ───────────────────────────────────────────────────
-  const summary = booking
-    ? calcSummary(booking.pricePerSlot, booking.slots.length, discountAmount)
-    : null;
 
   const selectedMethod = mockPaymentMethods.find(
     (m) => m.id === selectedMethodId
@@ -257,7 +264,7 @@ export default function CheckoutPage() {
   );
 
   // ── Loading / redirect state ──────────────────────────────────
-  if (!booking) {
+  if (!isLoaded || !booking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />

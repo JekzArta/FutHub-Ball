@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Star, MapPin, Users, Heart } from "lucide-react";
+import { Star, MapPin, Heart } from "lucide-react";
 import { Lapangan } from "@/data/mockLapangan";
 
 interface LapanganCardProps {

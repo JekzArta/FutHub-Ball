@@ -16,8 +16,6 @@ import {
   ShieldCheck,
   ImageIcon,
   X,
-  CreditCard,
-  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { mockPaymentMethods, type BookingState, BOOKING_STATE_KEY } from "@/data/mockCheckout";
@@ -53,6 +51,10 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+// ── Constants ───────────────────────────────────────────────────
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
 // ── Main Component ─────────────────────────────────────────────────
 export default function PaymentPage() {
   const params = useParams();
@@ -73,6 +75,8 @@ export default function PaymentPage() {
   const [deadline, setDeadline] = useState<string>("");
 
   // ── Load from sessionStorage ───────────────────────────────────
+  const [isLoaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
     const raw = sessionStorage.getItem(BOOKING_STATE_KEY);
     const savedMethodId = sessionStorage.getItem("futhub_last_method_id");
@@ -83,16 +87,22 @@ export default function PaymentPage() {
       return;
     }
     try {
-      setBooking(JSON.parse(raw));
-      setMethodId(savedMethodId);
-      setTotal(Number(savedTotal));
+      const parsedBooking = JSON.parse(raw);
+      const valMethodId = savedMethodId;
+      const valTotal = Number(savedTotal);
 
       // Mock deadline: 2 hours from now
       const dl = new Date(Date.now() + 2 * 60 * 60 * 1000);
-      setDeadline(
-        dl.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) +
-          " WIB"
-      );
+      const valDeadline = dl.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB";
+
+      // Defer to avoid synchronous setState warning
+      Promise.resolve().then(() => {
+        setBooking(parsedBooking);
+        setMethodId(valMethodId);
+        setTotal(valTotal);
+        setDeadline(valDeadline);
+        setIsLoaded(true);
+      });
     } catch {
       router.replace("/lapangan");
     }
@@ -101,8 +111,6 @@ export default function PaymentPage() {
   const method = mockPaymentMethods.find((m) => m.id === methodId);
 
   // ── File handling ──────────────────────────────────────────────
-  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-  const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
   const processFile = useCallback((file: File) => {
     setFileError("");
@@ -167,7 +175,7 @@ export default function PaymentPage() {
   }, [previewUrl]);
 
   // ── Loading ───────────────────────────────────────────────────
-  if (!booking || !method) {
+  if (!isLoaded || !booking || !method) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />

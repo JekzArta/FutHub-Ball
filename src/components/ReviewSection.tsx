@@ -188,7 +188,7 @@ function ReviewItem({ review }: { review: Review }) {
 }
 
 // ─── Main Review Section ───
-export default function ReviewSection({ lapanganName }: { lapanganName: string }) {
+export default function ReviewSection() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">

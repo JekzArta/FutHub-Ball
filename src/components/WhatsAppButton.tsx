@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 // Replace with your actual WhatsApp admin number (include country code, no +)
 const WHATSAPP_NUMBER = "6282117081871";
@@ -9,6 +10,7 @@ const WHATSAPP_MESSAGE = "Halo Admin FutHub Ball! Saya ingin bertanya mengenai b
 export default function WhatsAppButton() {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const pathname = usePathname();
 
   // Show button after scrolling down 200px
   useEffect(() => {
@@ -23,6 +25,8 @@ export default function WhatsAppButton() {
   }, []);
 
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_MESSAGE)}`;
+
+  if (pathname.startsWith("/admin")) return null;
 
   return (
     <div
