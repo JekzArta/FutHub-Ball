@@ -1,57 +1,65 @@
-# dependencies
+# Dependencies (Common)
 node_modules/
+/node_modules/
+/backend/node_modules/
+/frontend/node_modules/
+
+# Environment Variables (SENSITIVE)
 .env
-.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
+!.env.example
 
-# testing
-coverage/
-
-# next.js
+# Next.js / Frontend Build
 .next/
+/frontend/.next/
 out/
-.turbo/
-
-# production
+/frontend/out/
 build/
+/frontend/build/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# Backend / Production Build
 dist/
+/backend/dist/
+/backend/build/
+/backend/temp/
+/backend/storage/
+/backend/uploads/
 
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
+# Database & Prisma
+/backend/prisma/*.db
+/backend/prisma/*.db-journal
+/backend/src/generated/
 
-# debug & logs
+# Logs
+*.log
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-*.log
-logs/
 
-# misc
+# IDE & OS Files
+.vscode/
+.idea/
+*.swp
+*.swo
 .DS_Store
-*.pem
 Thumbs.db
+*.pem
+*.cert
+*.key
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# vercel
+# Tooling / Testing
 .vercel
+/backend/api_test.http
 
 # Project Specific
 futhub-ball-PRD.md
 node20/
-
-# Backend (potential paths for uploads/temp files based on PRD)
-backend/uploads/
-backend/temp/
-backend/storage/
-
-
