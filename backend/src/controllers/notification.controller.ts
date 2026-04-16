@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { webhookService } from '../services/webhook.service';
+import { NotificationLog } from '@prisma/client';
 
 export const notificationController = {
   // GET /api/v1/admin/notifications
@@ -12,7 +13,7 @@ export const notificationController = {
       });
 
       // Serialization for BigInt
-      const serialized = logs.map(l => ({ ...l, id: l.id.toString() }));
+      const serialized = logs.map((l: NotificationLog) => ({ ...l, id: l.id.toString() }));
 
       res.status(200).json({ success: true, data: serialized });
     } catch (error) {
@@ -23,7 +24,7 @@ export const notificationController = {
   // POST /api/v1/admin/notifications/:id/resend
   resendNotification: async (req: Request, res: Response): Promise<void> => {
     try {
-      const logId = BigInt(req.params.id);
+      const logId = BigInt(req.params.id as string);
       
       const logRecord = await prisma.notificationLog.findUnique({ where: { id: logId }});
       if (!logRecord) {

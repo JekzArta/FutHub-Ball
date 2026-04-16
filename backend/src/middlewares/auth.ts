@@ -51,3 +51,11 @@ export const authorize = (roles: string[]) => {
     next();
   };
 };
+
+export const authorizeAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+  if (!req.user || req.user.role !== Role.ADMIN) {
+    res.status(403).json({ success: false, message: 'Forbidden: Admin access required' });
+    return;
+  }
+  next();
+};

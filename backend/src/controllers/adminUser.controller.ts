@@ -30,7 +30,7 @@ export const adminUserController = {
   // PUT /api/v1/admin/users/:id/toggle
   toggleUserStatus: async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = BigInt(req.params.id);
+      const userId = BigInt(req.params.id as string);
       
       const user = await prisma.user.findUnique({ where: { id: userId } });
       if (!user) {

@@ -147,7 +147,7 @@ export const promoController = {
       const validatedData = createPromoSchema.parse(req.body);
 
       // Ensure promo exists
-      const existing = await prisma.promo.findUnique({ where: { id: BigInt(id) } });
+      const existing = await prisma.promo.findUnique({ where: { id: BigInt(id as string) } });
       if (!existing) {
         res.status(404).json({ success: false, message: 'Promo not found' });
         return;
@@ -164,10 +164,10 @@ export const promoController = {
       // Update in transaction to map field resets
       const promo = await prisma.$transaction(async (tx) => {
         // Delete all old applies
-        await tx.promoField.deleteMany({ where: { promoId: BigInt(id) } });
+        await tx.promoField.deleteMany({ where: { promoId: BigInt(id as string) } });
 
         return await tx.promo.update({
-          where: { id: BigInt(id) },
+          where: { id: BigInt(id as string) },
           data: {
             code: validatedData.code,
             type: validatedData.type,
@@ -202,7 +202,7 @@ export const promoController = {
   deletePromo: async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      await prisma.promo.delete({ where: { id: BigInt(id) }});
+      await prisma.promo.delete({ where: { id: BigInt(id as string) }});
       res.status(200).json({ success: true, message: 'Promo deleted successfully' });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Internal server error or promo in use' });

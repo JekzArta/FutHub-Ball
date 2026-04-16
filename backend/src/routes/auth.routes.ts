@@ -11,5 +11,7 @@ router.post('/admin/login', authController.adminLogin);
 
 // Protected routes
 router.get('/me', authenticate, authController.getMe);
+router.put('/profile', authenticate, authController.updateProfile);
+router.put('/password', authenticate, authController.updatePassword);
 
 export default router;

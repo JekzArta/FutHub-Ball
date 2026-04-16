@@ -35,7 +35,7 @@ export const reviewController = {
   // GET /api/v1/fields/:id/reviews
   getReviews: async (req: Request, res: Response): Promise<void> => {
     try {
-      const fieldId = BigInt(req.params.id);
+      const fieldId = BigInt(req.params.id as string);
       const reviews = await prisma.review.findMany({
         where: { fieldId },
         include: {
@@ -70,8 +70,8 @@ export const reviewController = {
   // POST /api/v1/fields/:id/reviews
   createReview: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const fieldId = BigInt(req.params.id);
-      const userId = BigInt(req.user!.id);
+      const fieldId = BigInt(req.params.id as string);
+      const userId = BigInt(req.user!.id as string);
       const validatedData = createReviewSchema.parse(req.body);
 
       const canReview = await reviewService.canUserReviewField(userId, fieldId);
@@ -111,8 +111,8 @@ export const reviewController = {
   // POST /api/v1/reviews/:id/replies
   replyToReview: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const reviewId = BigInt(req.params.id);
-      const userId = BigInt(req.user!.id);
+      const reviewId = BigInt(req.params.id as string);
+      const userId = BigInt(req.user!.id as string);
       const validatedData = replySchema.parse(req.body);
 
       const review = await prisma.review.findUnique({ where: { id: reviewId } });
@@ -142,8 +142,8 @@ export const reviewController = {
   // POST /api/v1/replies/:id/replies
   replyToReply: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const parentId = BigInt(req.params.id);
-      const userId = BigInt(req.user!.id);
+      const parentId = BigInt(req.params.id as string);
+      const userId = BigInt(req.user!.id as string);
       const validatedData = replySchema.parse(req.body);
 
       const parentReply = await prisma.reviewReply.findUnique({ where: { id: parentId } });
@@ -174,8 +174,8 @@ export const reviewController = {
   // POST /api/v1/reviews/:id/vote
   voteReview: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const reviewId = BigInt(req.params.id);
-      const userId = BigInt(req.user!.id);
+      const reviewId = BigInt(req.params.id as string);
+      const userId = BigInt(req.user!.id as string);
       const { type } = voteSchema.parse(req.body);
 
       await prisma.reviewVote.upsert({
@@ -205,12 +205,12 @@ export const reviewController = {
         // Fallback upsert using transaction if compound unique throws error
         try {
           const existing = await prisma.reviewVote.findFirst({
-            where: { userId: BigInt(req.user!.id), voteableType: VoteableType.REVIEW, reviewId: BigInt(req.params.id) }
+            where: { userId: BigInt(req.user!.id as string), voteableType: VoteableType.REVIEW, reviewId: BigInt(req.params.id as string) }
           });
           if (existing) {
              await prisma.reviewVote.update({ where: { id: existing.id }, data: { voteType: req.body.type }});
           } else {
-             await prisma.reviewVote.create({ data: { userId: BigInt(req.user!.id), voteableType: VoteableType.REVIEW, reviewId: BigInt(req.params.id), voteType: req.body.type }});
+             await prisma.reviewVote.create({ data: { userId: BigInt(req.user!.id as string), voteableType: VoteableType.REVIEW, reviewId: BigInt(req.params.id as string), voteType: req.body.type }});
           }
           res.status(200).json({ success: true, message: 'Vote recorded' });
         } catch (e) {
@@ -223,8 +223,8 @@ export const reviewController = {
   // POST /api/v1/replies/:id/vote
   voteReply: async (req: AuthRequest, res: Response): Promise<void> => {
     try {
-      const replyId = BigInt(req.params.id);
-      const userId = BigInt(req.user!.id);
+      const replyId = BigInt(req.params.id as string);
+      const userId = BigInt(req.user!.id as string);
       const { type } = voteSchema.parse(req.body);
 
       const existing = await prisma.reviewVote.findFirst({
@@ -249,7 +249,7 @@ export const reviewController = {
   // DELETE /api/v1/admin/reviews/:id
   deleteReviewAdmin: async (req: Request, res: Response): Promise<void> => {
     try {
-      await prisma.review.delete({ where: { id: BigInt(req.params.id) } });
+      await prisma.review.delete({ where: { id: BigInt(req.params.id as string) } });
       res.status(200).json({ success: true, message: 'Review deleted' });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Internal server error' });
@@ -259,7 +259,7 @@ export const reviewController = {
   // DELETE /api/v1/admin/replies/:id
   deleteReplyAdmin: async (req: Request, res: Response): Promise<void> => {
     try {
-      await prisma.reviewReply.delete({ where: { id: BigInt(req.params.id) } });
+      await prisma.reviewReply.delete({ where: { id: BigInt(req.params.id as string) } });
       res.status(200).json({ success: true, message: 'Reply deleted' });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Internal server error' });
