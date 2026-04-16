@@ -1,0 +1,354 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id            BigInt        @id @default(autoincrement())
+  name          String
+  email         String        @unique
+  phone         String?
+  password      String
+  avatar        String?
+  role          Role          @default(USER)
+  isActive      Boolean       @default(true) @map("is_active")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  bookings      Booking[]
+  promoUsages   PromoUsage[]
+  reviewReplies ReviewReply[]
+  reviewVotes   ReviewVote[]
+  reviews       Review[]
+
+  @@map("users")
+}
+
+model Field {
+  id            BigInt                @id @default(autoincrement())
+  number        Int
+  name          String
+  type          FieldType
+  description   String?               @db.Text
+  pricePerSlot  Int                   @map("price_per_slot")
+  isActive      Boolean               @default(true) @map("is_active")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+  bookings      Booking[]
+  facilities    FieldFacility[]
+  photos        FieldPhoto[]
+  hours         OperationalHour[]
+  hourOverrides OperationalOverride[]
+  promos        PromoField[]
+  reviews       Review[]
+  slotOverrides SlotOverride[]
+
+  @@map("fields")
+}
+
+model FieldPhoto {
+  id        BigInt   @id @default(autoincrement())
+  fieldId   BigInt   @map("field_id")
+  photoUrl  String   @map("photo_url")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+  field     Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId], map: "field_photos_field_id_fkey")
+  @@map("field_photos")
+}
+
+model Facility {
+  id        BigInt          @id @default(autoincrement())
+  name      String
+  icon      String?
+  createdAt DateTime        @default(now()) @map("created_at")
+  fields    FieldFacility[]
+
+  @@map("facilities")
+}
+
+model FieldFacility {
+  id         BigInt   @id @default(autoincrement())
+  fieldId    BigInt   @map("field_id")
+  facilityId BigInt   @map("facility_id")
+  facility   Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  field      Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId], map: "field_facilities_facility_id_fkey")
+  @@index([fieldId], map: "field_facilities_field_id_fkey")
+  @@map("field_facilities")
+}
+
+model OperationalHour {
+  id        BigInt @id @default(autoincrement())
+  fieldId   BigInt @map("field_id")
+  openTime  String @map("open_time") @db.VarChar(5)
+  closeTime String @map("close_time") @db.VarChar(5)
+  field     Field  @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId], map: "operational_hours_field_id_fkey")
+  @@map("operational_hours")
+}
+
+model OperationalOverride {
+  id        BigInt   @id @default(autoincrement())
+  fieldId   BigInt   @map("field_id")
+  date      DateTime @db.Date
+  openTime  String?  @map("open_time") @db.VarChar(5)
+  closeTime String?  @map("close_time") @db.VarChar(5)
+  isClosed  Boolean  @default(false) @map("is_closed")
+  createdAt DateTime @default(now()) @map("created_at")
+  field     Field    @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId], map: "operational_overrides_field_id_fkey")
+  @@map("operational_overrides")
+}
+
+model SlotOverride {
+  id        BigInt     @id @default(autoincrement())
+  fieldId   BigInt     @map("field_id")
+  date      DateTime   @db.Date
+  slotTime  String     @map("slot_time") @db.VarChar(5)
+  status    SlotStatus
+  note      String?
+  createdAt DateTime   @default(now()) @map("created_at")
+  field     Field      @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId], map: "slot_overrides_field_id_fkey")
+  @@map("slot_overrides")
+}
+
+model Booking {
+  id             BigInt        @id @default(autoincrement())
+  userId         BigInt        @map("user_id")
+  fieldId        BigInt        @map("field_id")
+  promoId        BigInt?       @map("promo_id")
+  date           DateTime      @db.Date
+  startTime      String        @map("start_time") @db.VarChar(5)
+  endTime        String        @map("end_time") @db.VarChar(5)
+  totalSlots     Int           @map("total_slots")
+  basePrice      Int           @map("base_price")
+  discountAmount Int           @default(0) @map("discount_amount")
+  finalPrice     Int           @map("final_price")
+  paymentType    PaymentType   @map("payment_type")
+  status         BookingStatus @default(PENDING)
+  refundNoted    Boolean       @default(false) @map("refund_noted")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  field          Field         @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  promo          Promo?        @relation(fields: [promoId], references: [id])
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments       Payment[]
+  promoUsages    PromoUsage[]
+  review         Review?
+
+  @@index([fieldId], map: "bookings_field_id_fkey")
+  @@index([promoId], map: "bookings_promo_id_fkey")
+  @@index([userId], map: "bookings_user_id_fkey")
+  @@map("bookings")
+}
+
+model Payment {
+  id              BigInt        @id @default(autoincrement())
+  bookingId       BigInt        @map("booking_id")
+  paymentMethodId BigInt        @map("payment_method_id")
+  proofImageUrl   String        @map("proof_image_url")
+  status          PaymentStatus @default(PENDING)
+  verifiedAt      DateTime?     @map("verified_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  method          PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+
+  @@index([bookingId], map: "payments_booking_id_fkey")
+  @@index([paymentMethodId], map: "payments_payment_method_id_fkey")
+  @@map("payments")
+}
+
+model PaymentMethod {
+  id            BigInt            @id @default(autoincrement())
+  type          PaymentMethodType
+  name          String
+  accountNumber String            @map("account_number")
+  accountName   String            @map("account_name")
+  isActive      Boolean           @default(true) @map("is_active")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  payments      Payment[]
+
+  @@map("payment_methods")
+}
+
+model Promo {
+  id              BigInt            @id @default(autoincrement())
+  code            String            @unique
+  type            PromoType
+  value           Int
+  applicableTo    PromoApplicableTo @map("applicable_to")
+  startDate       DateTime          @map("start_date") @db.Date
+  endDate         DateTime          @map("end_date") @db.Date
+  maxUsage        Int?              @map("max_usage")
+  maxUsagePerUser Int?              @map("max_usage_per_user")
+  currentUsage    Int               @default(0) @map("current_usage")
+  isActive        Boolean           @default(true) @map("is_active")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  bookings        Booking[]
+  fields          PromoField[]
+  usages          PromoUsage[]
+
+  @@map("promos")
+}
+
+model PromoField {
+  id      BigInt @id @default(autoincrement())
+  promoId BigInt @map("promo_id")
+  fieldId BigInt @map("field_id")
+  field   Field  @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  promo   Promo  @relation(fields: [promoId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId], map: "promo_fields_field_id_fkey")
+  @@index([promoId], map: "promo_fields_promo_id_fkey")
+  @@map("promo_fields")
+}
+
+model PromoUsage {
+  id        BigInt   @id @default(autoincrement())
+  promoId   BigInt   @map("promo_id")
+  userId    BigInt   @map("user_id")
+  bookingId BigInt   @map("booking_id")
+  usedAt    DateTime @default(now()) @map("used_at")
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  promo     Promo    @relation(fields: [promoId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([bookingId], map: "promo_usages_booking_id_fkey")
+  @@index([promoId], map: "promo_usages_promo_id_fkey")
+  @@index([userId], map: "promo_usages_user_id_fkey")
+  @@map("promo_usages")
+}
+
+model Review {
+  id        BigInt        @id @default(autoincrement())
+  userId    BigInt        @map("user_id")
+  fieldId   BigInt        @map("field_id")
+  bookingId BigInt        @unique @map("booking_id")
+  rating    Int           @db.TinyInt
+  content   String        @db.Text
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  replies   ReviewReply[]
+  votes     ReviewVote[]
+  booking   Booking       @relation(fields: [bookingId], references: [id])
+  field     Field         @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([fieldId], map: "reviews_field_id_fkey")
+  @@index([userId], map: "reviews_user_id_fkey")
+  @@map("reviews")
+}
+
+model ReviewReply {
+  id        BigInt        @id @default(autoincrement())
+  reviewId  BigInt        @map("review_id")
+  userId    BigInt        @map("user_id")
+  parentId  BigInt?       @map("parent_id")
+  content   String        @db.Text
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+  parent    ReviewReply?  @relation("ReplyToReply", fields: [parentId], references: [id], onDelete: Cascade)
+  children  ReviewReply[] @relation("ReplyToReply")
+  review    Review        @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  votes     ReviewVote[]
+
+  @@index([parentId], map: "review_replies_parent_id_fkey")
+  @@index([reviewId], map: "review_replies_review_id_fkey")
+  @@index([userId], map: "review_replies_user_id_fkey")
+  @@map("review_replies")
+}
+
+model ReviewVote {
+  id           BigInt       @id @default(autoincrement())
+  userId       BigInt       @map("user_id")
+  voteableType VoteableType @map("voteable_type")
+  reviewId     BigInt?      @map("review_id")
+  replyId      BigInt?      @map("reply_id")
+  voteType     VoteType     @map("vote_type")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  reply        ReviewReply? @relation(fields: [replyId], references: [id], onDelete: Cascade)
+  review       Review?      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, voteableType, reviewId, replyId])
+  @@index([replyId], map: "review_votes_reply_id_fkey")
+  @@index([reviewId], map: "review_votes_review_id_fkey")
+  @@map("review_votes")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum FieldType {
+  INDOOR_SINTETIS
+  INDOOR_VINYL
+  INDOOR_BETON
+  OUTDOOR_SINTETIS
+  OUTDOOR_BETON
+}
+
+enum SlotStatus {
+  AVAILABLE
+  CLOSED
+  MAINTENANCE
+  BOOKED
+}
+
+enum PaymentType {
+  ONLINE
+  OFFLINE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PaymentMethodType {
+  BANK
+  EWALLET
+}
+
+enum PromoType {
+  PERCENTAGE
+  NOMINAL
+}
+
+enum PromoApplicableTo {
+  ALL_FIELDS
+  SPECIFIC_FIELDS
+}
+
+enum VoteableType {
+  REVIEW
+  REPLY
+}
+
+enum VoteType {
+  UPRATE
+  DOWNRATE
+}
