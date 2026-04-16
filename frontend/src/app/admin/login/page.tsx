@@ -1,22 +1,77 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Lock, Eye, EyeOff, ShieldCheck, MapPin } from "lucide-react";
+import { Lock, Eye, EyeOff, ShieldCheck, Mail } from "lucide-react";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({ email: "", password: "" });
+
+  // If already logged in as admin, redirect to dashboard
+  useEffect(() => {
+    const checkToken = () => {
+      const token = localStorage.getItem("futhub_token");
+      if (token) {
+        fetch(`${API_BASE_URL}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data?.data?.role === "ADMIN") {
+              router.replace("/admin/dashboard");
+            }
+          })
+          .catch(() => {});
+      }
+    };
+
+    checkToken();
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "futhub_token" && e.newValue) {
+        checkToken();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Dummy login handler, normally you fetch /api/v1/auth/admin/login
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-    router.push("/admin/dashboard");
+    setError(null);
+
+    try {
+      // Gunakan endpoint admin login khusus
+      const res = await fetch(`${API_BASE_URL}/auth/admin/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Login gagal. Periksa email dan password Anda.");
+      }
+
+      // Simpan token dan data user — key SAMA dengan yang dipakai fetchApi & useAuth
+      localStorage.setItem("futhub_token", data.data.token);
+      localStorage.setItem("futhub_user", JSON.stringify(data.data.user));
+
+      router.push("/admin/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Terjadi kesalahan. Coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -36,21 +91,28 @@ export default function AdminLoginPage() {
           <p className="text-slate-400 text-sm mt-1">Sistem Manajemen FutHub Ball</p>
         </div>
 
+        {error && (
+          <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-300">
-              Username Admin
+              Email Admin
             </label>
             <div className="relative">
               <input
-                type="text"
+                type="email"
                 required
-                value={form.username}
-                onChange={(e) => setForm({ ...form, username: e.target.value })}
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 pl-10 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
-                placeholder="Masukkan username"
+                placeholder="admin@futhub.com"
+                disabled={isLoading}
               />
-              <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             </div>
           </div>
 
@@ -66,6 +128,7 @@ export default function AdminLoginPage() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="w-full rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-3 pl-10 pr-12 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                 placeholder="Masukkan password"
+                disabled={isLoading}
               />
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
               <button

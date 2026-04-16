@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, MapPin, ArrowRight, AlertCircle, Check } from "lucide-react";
+import { fetchApi } from "@/lib/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -44,17 +45,28 @@ export default function RegisterPage() {
       setError(validationError);
       return;
     }
+    
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1400));
-    
-    // Simulate successful registration
-    // We don't automatically log in for registration flow (usually), 
-    // but for mock purposes we could. Let's redirect to login for a standard flow.
-    
-    setIsLoading(false);
-    // Redirect to login
-    router.push("/login?registered=true");
+    setError("");
+
+    try {
+      // Exclude 'confirm' from payload
+      const { confirm, ...payload } = form;
+      
+      const response = await fetchApi('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      if (response.success) {
+        // Redirect to login with success flag
+        router.push("/login?registered=true");
+      }
+    } catch (err: any) {
+      setError(err.message || "Gagal melakukan pendaftaran. Silakan coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const passwordStrength = () => {

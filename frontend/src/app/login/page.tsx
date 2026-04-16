@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, MapPin, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
+import { fetchApi } from "@/lib/api";
 
 // Note: metadata must be in a server component; kept here as reference
 // export const metadata: Metadata = { title: "Masuk | FutHub Ball" };
@@ -31,34 +32,45 @@ function LoginContent() {
     setError("");
   };
 
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "futhub_token" && e.newValue) {
+        window.location.href = "/";
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.email || !form.password) {
       setError("Email dan password wajib diisi.");
       return;
     }
+    
     setIsLoading(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1200));
-    
-    // Mock successful login: store user data in sessionStorage
-    const mockUser = {
-      id: "USR-001",
-      name: "Budi Santoso",
-      email: form.email,
-      avatar: "BS",
-      role: "member"
-    };
-    
-    sessionStorage.setItem("futhub_user", JSON.stringify(mockUser));
-    
-    setIsLoading(false);
-    // Redirect to home
-    router.push("/");
-    // Force a small delay then refresh to update Navbar state (since we're not using a global state manager like Redux/Zustand yet)
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    setError("");
+
+    try {
+      const response = await fetchApi('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify(form),
+      });
+
+      if (response.success && response.data) {
+        // Store token and user data
+        localStorage.setItem("futhub_token", response.data.token);
+        localStorage.setItem("futhub_user", JSON.stringify(response.data.user));
+        
+        // Hard redirect to home - refreshes all state including Navbar
+        window.location.href = "/";
+      }
+    } catch (err: any) {
+      setError(err.message || "Gagal masuk. Silakan cek email dan password Anda.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

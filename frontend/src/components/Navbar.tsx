@@ -13,14 +13,43 @@ export default function Navbar() {
   const router = useRouter();
 
   useEffect(() => {
-    const savedUser = sessionStorage.getItem("futhub_user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
+    const loadUser = () => {
+      const savedUser = localStorage.getItem("futhub_user");
+      if (savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser);
+          if (!parsedUser.avatar && parsedUser.name) {
+            parsedUser.avatar = parsedUser.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
+          }
+          setUser(parsedUser);
+        } catch (e) {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+
+    loadUser();
+
+    // Singkronisasi tab log in/log out
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "futhub_token" || e.key === "futhub_user") {
+        if (!localStorage.getItem("futhub_token")) {
+          setUser(null);
+        } else {
+          loadUser();
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
   const handleLogout = () => {
-    sessionStorage.removeItem("futhub_user");
+    localStorage.removeItem("futhub_user");
+    localStorage.removeItem("futhub_token");
     setUser(null);
     setIsOpen(false);
     router.push("/");

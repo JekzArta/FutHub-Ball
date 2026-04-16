@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -11,13 +11,15 @@ import {
   MessageSquare,
   BarChart3,
   Users,
-  LogOut
+  LogOut,
+  Settings
 } from "lucide-react";
 
 const navItems = [
   { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { name: "Booking", href: "/admin/booking", icon: CalendarDays },
   { name: "Lapangan", href: "/admin/lapangan", icon: MapPin },
+  { name: "Fasilitas", href: "/admin/fasilitas", icon: Settings },
   { name: "Promo", href: "/admin/promo", icon: Tag },
   { name: "Pembayaran", href: "/admin/pembayaran", icon: CreditCard },
   { name: "Ulasan", href: "/admin/ulasan", icon: MessageSquare },
@@ -27,6 +29,13 @@ const navItems = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem("futhub_token");
+    localStorage.removeItem("futhub_user");
+    router.push("/admin/login");
+  };
 
   return (
     <aside className="w-64 flex-shrink-0 border-r border-slate-200 bg-white hidden md:flex flex-col">
@@ -62,7 +71,7 @@ export default function AdminSidebar() {
       </nav>
 
       <div className="p-4 border-t border-slate-100">
-        <button className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
+        <button onClick={handleLogout} className="flex w-full items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-colors">
           <LogOut className="h-5 w-5" />
           Logout
         </button>
