@@ -7,6 +7,9 @@ import operationalRoutes from './routes/operational.routes';
 import bookingRoutes from './routes/booking.routes';
 import paymentRoutes from './routes/payment.routes';
 import adminBookingRoutes from './routes/adminBooking.routes';
+import promoRoutes from './routes/promo.routes';
+import reviewRoutes from './routes/review.routes';
+import reportRoutes from './routes/report.routes';
 
 const app = express();
 
@@ -27,7 +30,10 @@ app.use('/api/v1', operationalRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/payment-methods', paymentRoutes);
 app.use('/api/v1', paymentRoutes);
-app.use('/api/v1/admin', adminBookingRoutes);
+app.use('/api/v1', adminBookingRoutes);
+app.use('/api/v1/admin', reportRoutes);
+app.use('/api/v1', promoRoutes);
+app.use('/api/v1', reviewRoutes);
 
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../utils/prisma';
 import { BookingStatus, PaymentStatus } from '@prisma/client';
+import { webhookService } from '../services/webhook.service';
 
 export const adminBookingController = {
   // Admin - Get all bookings with optional status filter
@@ -110,8 +111,11 @@ export const adminBookingController = {
         data: { status: BookingStatus.CONFIRMED },
       });
 
-      // TODO: Trigger n8n webhook for booking confirmation notification
-      // await notifyN8n('booking_confirmed', { bookingId: id, userId: booking.userId });
+      // Trigger n8n webhook for booking confirmation
+      const user = await prisma.user.findUnique({ where: { id: booking.userId }});
+      if (user) {
+        webhookService.triggerBookingConfirmed(booking.id, user.email, user.phone || '').catch(console.error);
+      }
 
       res.status(200).json({ success: true, message: 'Booking berhasil di-approve', data: updatedBooking });
     } catch (error: any) {
@@ -152,8 +156,11 @@ export const adminBookingController = {
         data: { status: BookingStatus.REJECTED },
       });
 
-      // TODO: Trigger n8n webhook for rejection notification
-      // await notifyN8n('booking_rejected', { bookingId: id, reason });
+      // Trigger n8n webhook for rejection
+       const user = await prisma.user.findUnique({ where: { id: booking.userId }});
+       if (user) {
+         webhookService.triggerBookingRejected(booking.id, user.email, user.phone || '').catch(console.error);
+       }
 
       res.status(200).json({ success: true, message: 'Booking berhasil di-reject', data: updatedBooking });
     } catch (error: any) {

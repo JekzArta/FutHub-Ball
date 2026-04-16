@@ -352,3 +352,42 @@ enum VoteType {
   UPRATE
   DOWNRATE
 }
+
+model SystemConfig {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("system_configs")
+}
+
+model NotificationLog {
+  id           BigInt              @id @default(autoincrement())
+  eventType    String              @map("event_type")
+  recipient    String
+  channel      NotificationChannel
+  payload      String              @db.Text
+  status       NotificationStatus  @default(PENDING)
+  response     String?             @db.Text
+  errorMessage String?             @map("error_message") @db.Text
+  n8nUrlUsed   String              @map("n8n_url_used")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  @@map("notification_logs")
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  EMAIL
+  BOTH
+}
+
+enum NotificationStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}

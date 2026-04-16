@@ -3,7 +3,7 @@ import { prisma } from '../utils/prisma';
 import { slotService } from '../services/slotService';
 import { z } from 'zod';
 import { PaymentType } from '@prisma/client';
-
+import { webhookService } from '../services/webhook.service';
 const createBookingSchema = z.object({
   fieldId: z.string().min(1, 'Field ID wajib diisi'),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal harus YYYY-MM-DD'),
@@ -208,10 +208,17 @@ export const bookingController = {
         return newBooking;
       });
 
+      const adminUsers = await prisma.user.findMany({ where: { role: 'ADMIN' }, select: { email: true, phone: true } });
+      const mainAdmin = adminUsers[0];
+      if (mainAdmin) {
+        // Run async in background without awaiting so it doesn't block response
+        webhookService.triggerBookingCreated(booking.id, mainAdmin.email, mainAdmin.phone || '').catch(e => console.error("Webhook trigger failed", e));
+      }
+
       res.status(201).json({
         success: true,
         message: 'Booking berhasil dibuat. Silakan lanjutkan dengan pembayaran.',
-        data: booking,
+        data: { ...booking, id: booking.id.toString(), userId: booking.userId.toString(), fieldId: booking.fieldId.toString() },
       });
     } catch (error: any) {
       if (error instanceof z.ZodError) {
