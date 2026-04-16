@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, MapPin, User, LogOut, History, Settings } from "lucide-react";
+import { Menu, X, MapPin, User, LogOut, History, Settings, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const [user, setUser] = useState<{ name: string; avatar: string } | null>(null);
+  const [user, setUser] = useState<{ name: string; avatar: string; role: string } | null>(null);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -93,15 +93,23 @@ export default function Navbar() {
 
         {/* Desktop Action Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          {user ? (
-            <div className="flex items-center gap-4">
+           {user ? (
+            <div className="flex items-center gap-3">
+              {user.role === 'ADMIN' && (
+                <Button variant="outline" size="sm" asChild className="hidden lg:flex items-center gap-2 border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800">
+                  <Link href="/admin/dashboard">
+                    <LayoutDashboard className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+              )}
               <Link href="/profil" className="flex items-center gap-2 group p-1 pr-3 rounded-full hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-200">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 font-bold text-sm">
                   {user.avatar}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs font-semibold text-slate-900 group-hover:text-primary transition-colors">{user.name}</span>
-                  <span className="text-[10px] text-slate-500 leading-tight">Member Pro</span>
+                  <span className="text-[10px] text-slate-500 leading-tight">{user.role === 'ADMIN' ? 'Administrator' : 'Member Pro'}</span>
                 </div>
               </Link>
               <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-400 hover:text-red-500" title="Keluar">
@@ -158,6 +166,11 @@ export default function Navbar() {
             <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
               {user ? (
                 <>
+                  {user.role === 'ADMIN' && (
+                    <Link href="/admin/dashboard" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-3 rounded-xl bg-emerald-50 text-emerald-700 font-semibold mb-1">
+                      <LayoutDashboard className="h-5 w-5" /> Dashboard Admin
+                    </Link>
+                  )}
                   <Link href="/profil" onClick={() => setIsOpen(false)} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 text-slate-700 font-medium">
                     <User className="h-5 w-5 text-emerald-500" /> Profil Saya
                   </Link>

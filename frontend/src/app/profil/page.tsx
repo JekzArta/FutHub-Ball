@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { fetchApi } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import {
-  User,
+  User as UserIcon,
   Mail,
   Phone,
   Lock,
@@ -15,26 +17,28 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// Dummy user — replace with data from GET /auth/me
-const dummyUser = {
-  name: "Andi Pratama",
-  email: "andi@email.com",
-  phone: "081234567890",
-  avatar: null as string | null,
-  joinedAt: "Januari 2026",
-};
-
 type Tab = "profil" | "password";
 
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  phone?: string | null;
+  avatar?: string | null;
+  createdAt: string;
+}
+
 export default function ProfilPage() {
+  const { user, isLoading: authLoading } = useAuth();
+  const authUser = user as UserProfile | null;
   const [tab, setTab] = useState<Tab>("profil");
-  const [user, setUser] = useState(dummyUser);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [profileForm, setProfileForm] = useState({
-    name: user.name,
-    phone: user.phone,
+    name: "",
+    phone: "",
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -50,6 +54,17 @@ export default function ProfilPage() {
   const [passwordStatus, setPasswordStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [passwordError, setPasswordError] = useState("");
 
+  // Update form when authUser is loaded
+  useEffect(() => {
+    if (authUser) {
+      setProfileForm({
+        name: authUser.name,
+        phone: authUser.phone || "",
+      });
+      if (authUser.avatar) setAvatarPreview(authUser.avatar);
+    }
+  }, [authUser]);
+
   // Avatar change
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,32 +78,68 @@ export default function ProfilPage() {
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setProfileStatus("loading");
-    await new Promise((r) => setTimeout(r, 1000));
-    setUser({ ...user, name: profileForm.name, phone: profileForm.phone });
-    setProfileStatus("success");
-    setTimeout(() => setProfileStatus("idle"), 3000);
+    try {
+      await fetchApi("/auth/profile", {
+        method: "PUT",
+        body: JSON.stringify({
+          name: profileForm.name,
+          phone: profileForm.phone
+        })
+      });
+      
+      setProfileStatus("success");
+      setTimeout(() => setProfileStatus("idle"), 3000);
+    } catch (err) {
+      setProfileStatus("error");
+    }
   };
 
   // Password save
   const handlePasswordSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordError("");
-    if (passwordForm.newPassword.length < 8) {
-      setPasswordError("Password baru minimal 8 karakter.");
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError("Password baru minimal 6 karakter.");
       return;
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       setPasswordError("Konfirmasi password tidak cocok.");
       return;
     }
+    
     setPasswordStatus("loading");
-    await new Promise((r) => setTimeout(r, 1000));
-    setPasswordStatus("success");
-    setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    setTimeout(() => setPasswordStatus("idle"), 3000);
+    try {
+      await fetchApi("/auth/password", {
+        method: "PUT",
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        })
+      });
+      
+      setPasswordStatus("success");
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setTimeout(() => setPasswordStatus("idle"), 3000);
+    } catch (err: any) {
+      setPasswordStatus("error");
+      setPasswordError(err.message || "Gagal mengubah password.");
+    }
   };
 
-  const initials = user.name
+  if (authLoading || !authUser) {
+    return (
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-slate-50">
+        <div className="animate-spin h-8 w-8 border-4 border-emerald-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  const formattedDate = new Date(authUser.createdAt).toLocaleDateString('id-ID', {
+    month: 'long',
+    year: 'numeric'
+  });
+
+  const initials = authUser.name
     .split(" ")
     .map((w) => w[0])
     .slice(0, 2)
@@ -137,9 +188,9 @@ export default function ProfilPage() {
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-900 text-lg">{user.name}</p>
-            <p className="text-sm text-slate-500">{user.email}</p>
-            <p className="text-xs text-slate-400 mt-1">Bergabung sejak {user.joinedAt}</p>
+            <p className="font-semibold text-slate-900 text-lg">{authUser.name}</p>
+            <p className="text-sm text-slate-500">{authUser.email}</p>
+            <p className="text-xs text-slate-400 mt-1">Bergabung sejak {formattedDate}</p>
           </div>
         </div>
 
@@ -169,7 +220,7 @@ export default function ProfilPage() {
                 Nama Lengkap
               </label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   id="profil-name"
                   type="text"
@@ -189,7 +240,7 @@ export default function ProfilPage() {
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
                 <input
                   type="email"
-                  value={user.email}
+                  value={authUser.email}
                   readOnly
                   className="w-full rounded-xl border border-slate-100 bg-slate-100 pl-10 pr-4 py-3 text-sm text-slate-400 cursor-not-allowed"
                 />
